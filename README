@@ -12,7 +12,7 @@ Run
 ===
 
 $ sbt
-> run src/main/resources/response-sample.txt
+> run config/response-sample.txt
 
 The response-sample.txt represents a response per line. Each request made to
 killdeer replays the responses in the sample file. When it reaches the end it
