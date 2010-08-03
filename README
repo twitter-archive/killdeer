@@ -21,6 +21,8 @@ The columns represent the following:
 
 response-time-in-secs response-size response-status-code
 
+$ ab -n 1000 -c 10 http://localhost:6666/
+
 Authors
 =======
 Marcel Molina
