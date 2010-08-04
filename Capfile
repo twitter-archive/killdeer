@@ -18,7 +18,7 @@ load 'deploy'
 set :ssh_options, {:auth_methods => %w{ publickey }, :keys => [KEY] }
 
 set :user, 'ubuntu'
-set :application, "killdeer"
+set :application, File.basename(`git config --get remote.origin.url`.chomp, '.*')
 set :repository, "git@github.com:twitter/#{application}.git"
 set :branch, "master"
 set :scm, :git
