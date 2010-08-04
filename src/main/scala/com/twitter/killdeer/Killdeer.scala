@@ -11,22 +11,31 @@ import javax.servlet.Servlet
 
 object Killdeer {
   def main(args: Array[String]) {
-    if (args.length < 1) {
-      println("usage: com.twitter.killdeer.Killdeer <path/to/latencies.txt>")
-      System.exit(-1)
+    val (samplesFilename: String, acceptors: Int) = args.length match {
+      case 0 => ("config/response-sample.txt", 20)
+      case 1 => (args(0), 20)
+      case 2 => (args(0), args(1).toInt)
+      case _ => {
+        println("usage: com.twitter.killdeer.Killdeer <path/to/latencies.txt> [acceptors]")
+        System.exit(-1)
+      }
     }
-    val server = new KilldeerServer(6666, args(0))
+
+    val server = new KilldeerServer(6666, samplesFilename, acceptors)
     server.start()
   }
 }
 
-class KilldeerServer(val port: Int, val responseSampleFilename: String) {
+class KilldeerServer(val port: Int, val responseSampleFilename: String, val numberOfAcceptors: Int) {
+  println("responseSampleFilename: %s".format(responseSampleFilename))
+  println("number of acceptors: %d".format(numberOfAcceptors))
+
   val server = new Server()
   val connector = new SelectChannelConnector
   connector.setPort(port)
   connector.setMaxIdleTime(30000)
   connector.setRequestHeaderSize(8192)
-  connector.setThreadPool(new ExecutorThreadPool(20))
+  connector.setThreadPool(new ExecutorThreadPool(numberOfAcceptors))
   server.addConnector(connector)
 
   val servletHandler = new ServletHandler
