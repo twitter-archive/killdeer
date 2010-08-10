@@ -10,5 +10,8 @@ class KilldeerProject(info: ProjectInfo) extends StandardProject(info) {
   val jettyServlet = "org.eclipse.jetty" % "jetty-servlet" % "7.1.5.v20100705"
   val jettyCont = "org.eclipse.jetty" % "jetty-continuation" % "7.1.5.v20100705"
 
+  // Renaming it to 1.2.0a so it doesn't read the broken POM file from the internet.
+  val colt = "colt" % "colt" % "1.2.0a"
+
   override def mainClass = Some("com.twitter.killdeer.Killdeer")
 }
