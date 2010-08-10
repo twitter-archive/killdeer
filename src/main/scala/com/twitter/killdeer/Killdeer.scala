@@ -38,17 +38,9 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
   server.addConnector(connector)
 
   val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
-  val normalDistribution      = new ServletHolder(new NormalDistributionServlet(1000.0, 1000.0))
-  val exponentialDistribution = new ServletHolder(new ExponentialDistributionServlet(.5))
-  val logarithmicDistribution = new ServletHolder(new LogarithmicDistributionServlet(10000.0))
-  val zipfDistribution        = new ServletHolder(new ZipfDistributionServlet(1.0, 100.0))
 
   val servletHandler = new ServletHandler
   servletHandler.addServletWithMapping(responseLogDistribution, "/")
-  servletHandler.addServletWithMapping(normalDistribution, "/normal")
-  servletHandler.addServletWithMapping(exponentialDistribution, "/exp")
-  servletHandler.addServletWithMapping(logarithmicDistribution, "/log")
-  servletHandler.addServletWithMapping(zipfDistribution, "/zipf")
 
   server.setHandler(servletHandler)
 
