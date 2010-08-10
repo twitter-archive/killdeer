@@ -8,7 +8,6 @@ import org.eclipse.jetty.util.thread.ExecutorThreadPool
 import org.eclipse.jetty.continuation.{Continuation, ContinuationSupport}
 import javax.servlet.Servlet
 
-
 object Killdeer {
   def main(args: Array[String]) {
     val (samplesFilename: String, acceptors: Int) = args.length match {
@@ -38,9 +37,19 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
   connector.setThreadPool(new ExecutorThreadPool(numberOfAcceptors))
   server.addConnector(connector)
 
+  val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
+  val normalDistribution      = new ServletHolder(new NormalDistributionServlet(1000.0, 1000.0))
+  val exponentialDistribution = new ServletHolder(new ExponentialDistributionServlet(.5))
+  val logarithmicDistribution = new ServletHolder(new LogarithmicDistributionServlet(10000.0))
+  val zipfDistribution        = new ServletHolder(new ZipfDistributionServlet(1.0, 100.0))
+
   val servletHandler = new ServletHandler
-  val sampleHolder = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
-  servletHandler.addServletWithMapping(sampleHolder, "/*")
+  servletHandler.addServletWithMapping(responseLogDistribution, "/")
+  servletHandler.addServletWithMapping(normalDistribution, "/normal")
+  servletHandler.addServletWithMapping(exponentialDistribution, "/exp")
+  servletHandler.addServletWithMapping(logarithmicDistribution, "/log")
+  servletHandler.addServletWithMapping(zipfDistribution, "/zipf")
+
   server.setHandler(servletHandler)
 
   def start() {
