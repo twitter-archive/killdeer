@@ -11,8 +11,8 @@ import javax.servlet.Servlet
 object Killdeer {
   def main(args: Array[String]) {
     val (samplesFilename: String, acceptors: Int) = args.length match {
-      case 0 => ("config/response-sample.txt", 20)
-      case 1 => (args(0), 20)
+      case 0 => ("config/response-sample.txt", 10000)
+      case 1 => (args(0), 10000)
       case 2 => (args(0), args(1).toInt)
       case _ => {
         println("usage: com.twitter.killdeer.Killdeer <path/to/latencies.txt> [acceptors]")
