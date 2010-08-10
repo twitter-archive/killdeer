@@ -40,7 +40,7 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
   val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
 
   val servletHandler = new ServletHandler
-  servletHandler.addServletWithMapping(responseLogDistribution, "/")
+  servletHandler.addServletWithMapping(responseLogDistribution, "/*")
 
   server.setHandler(servletHandler)
 
