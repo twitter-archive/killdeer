@@ -17,14 +17,15 @@ load 'deploy'
 
 set :ssh_options, {:auth_methods => %w{ publickey }, :keys => [KEY] }
 
-set :user, 'ubuntu'
+set :user, ENV['user'] || 'ubuntu'
+set :home_directory, ENV['home_directory'] || user
 set :application, File.basename(`git config --get remote.origin.url`.chomp, '.*')
 set :repository, "git@github.com:twitter/#{application}.git"
 set :branch, "master"
 set :scm, :git
 set :strategy, Capistrano::Deploy::Strategy::Build.new(self)
 set :copy_cache, true
-set :deploy_to, "/home/#{user}/#{application}"
+set :deploy_to, "/home/#{home_directory}/#{application}"
 set :currentloc, "#{deploy_to}/current"
 set :logloc, "#{deploy_to}/log"
 set :log, "#{logloc}/#{application}.log"
