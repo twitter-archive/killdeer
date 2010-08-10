@@ -1,5 +1,6 @@
 package com.twitter.killdeer
 
+import org.eclipse.jetty.continuation.ContinuationSupport
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 
 class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet {
@@ -10,12 +11,18 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
   val sample = new ResponseSampleLoader(responseSampleFilename)
 
   override def doGet(req: HttpServletRequest, res: HttpServletResponse) {
-    val response = sample.next()
-    Thread.sleep(response.latencyMs)
-    res.setContentLength(response.size)
-    res.setStatus(response.status)
-    res.getWriter().write("." * response.size)
+    val continuation = ContinuationSupport.getContinuation(req)
 
-    println(response.latencyMs.toString() + " " + txnid(req))
+    if (continuation.isInitial) {
+      val response: Response = sample.next()
+      req.setAttribute("response", response)
+      continuation.setTimeout(response.latencyMs)
+      continuation.suspend()
+    } else if (continuation.isExpired) {
+      val response = req.getAttribute("response").asInstanceOf[Response]
+      res.setContentLength(response.size)
+      res.setStatus(response.status)
+      res.getWriter().write("." * response.size)
+    }
   }
 }
