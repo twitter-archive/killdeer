@@ -34,7 +34,7 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
   connector.setPort(port)
   connector.setMaxIdleTime(30000)
   connector.setRequestHeaderSize(8192)
-  connector.setThreadPool(new ExecutorThreadPool(numberOfAcceptors))
+  connector.setThreadPool(new ExecutorThreadPool(numberOfAcceptors, numberOfAcceptors, 60000))
   server.addConnector(connector)
 
   val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
