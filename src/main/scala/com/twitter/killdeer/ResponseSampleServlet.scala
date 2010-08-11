@@ -20,8 +20,8 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
       continuation.suspend()
     } else if (continuation.isExpired) {
       val response = req.getAttribute("response").asInstanceOf[Response]
-      res.setContentLength(response.size)
-      res.setStatus(response.status)
+      //res.setContentLength(response.size)
+      res.setStatus(200)
       //res.getWriter().write("." * response.size)
     }
   }
