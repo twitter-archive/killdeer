@@ -22,7 +22,7 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
       val response = req.getAttribute("response").asInstanceOf[Response]
       res.setContentLength(response.size)
       res.setStatus(response.status)
-      res.getWriter().write("." * response.size)
+      //res.getWriter().write("." * response.size)
     }
   }
 }
