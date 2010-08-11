@@ -29,13 +29,33 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
   println("responseSampleFilename: %s".format(responseSampleFilename))
   println("number of acceptors: %d".format(numberOfAcceptors))
 
-  val server = new Server()
-  val connector = new SelectChannelConnector
-  connector.setPort(port)
-  connector.setMaxIdleTime(30000)
-  connector.setRequestHeaderSize(8192)
-  connector.setThreadPool(new ExecutorThreadPool(numberOfAcceptors, numberOfAcceptors, 60000))
-  server.addConnector(connector)
+  val server = new Server(port)
+  val conn = new SelectChannelConnector
+
+  var acceptors = 2
+  var maxIdleTimeMS = 1000
+  var lowResourcesMaxIdleTimeMS = 300
+  var lowResourcesConnections = 200
+  var resolveNames = false
+  var reuseAddress = true
+  var headerBufferSize = 4192
+  var requestBufferSize = 16 * 1024
+  var responseBufferSize = 16 * 1024
+  var soLingerSecs = -1
+
+  conn.setAcceptors(acceptors)
+  conn.setMaxIdleTime(maxIdleTimeMS)
+  conn.setAcceptQueueSize(100)
+  conn.setLowResourcesConnections(lowResourcesConnections)
+  conn.setLowResourceMaxIdleTime(lowResourcesMaxIdleTimeMS)
+  conn.setResolveNames(resolveNames)
+  conn.setReuseAddress(reuseAddress)
+  conn.setHeaderBufferSize(headerBufferSize)
+  conn.setRequestBufferSize(requestBufferSize)
+  conn.setResponseBufferSize(responseBufferSize)
+  conn.setSoLingerTime(soLingerSecs)
+
+  server.addConnector(conn)
 
   val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
 
