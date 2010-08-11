@@ -16,9 +16,10 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
     if (continuation.isInitial) {
       val response: Response = sample.next()
       req.setAttribute("response", response)
-      continuation.setTimeout(response.latencyMs)
+      //continuation.setTimeout(response.latencyMs)
       continuation.suspend()
-    } else if (continuation.isExpired) {
+      continuation.resume()
+    } else { // if (continuation.isExpired) {
       val response = req.getAttribute("response").asInstanceOf[Response]
       //res.setContentLength(response.size)
       res.setStatus(200)
