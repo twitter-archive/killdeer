@@ -11,19 +11,19 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
   val sample = new ResponseSampleLoader(responseSampleFilename)
 
   override def doGet(req: HttpServletRequest, res: HttpServletResponse) {
-    val continuation = ContinuationSupport.getContinuation(req)
+    //val continuation = ContinuationSupport.getContinuation(req)
 
-    if (continuation.isInitial) {
-      val response: Response = sample.next()
-      req.setAttribute("response", response)
+    //if (continuation.isInitial) {
+      //val response: Response = sample.next()
+      //req.setAttribute("response", response)
       //continuation.setTimeout(response.latencyMs)
-      continuation.suspend()
-      continuation.resume()
-    } else { // if (continuation.isExpired) {
-      val response = req.getAttribute("response").asInstanceOf[Response]
+      //continuation.suspend()
+      //continuation.resume()
+    //} else { // if (continuation.isExpired) {
+      //val response = req.getAttribute("response").asInstanceOf[Response]
       //res.setContentLength(response.size)
       res.setStatus(200)
       //res.getWriter().write("." * response.size)
-    }
+    //}
   }
 }
