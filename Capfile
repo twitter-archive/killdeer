@@ -18,17 +18,20 @@ load 'deploy'
 set :ssh_options, {:auth_methods => %w{ publickey }, :keys => [KEY] }
 
 set :user, ENV['user'] || 'ubuntu'
-set :home_directory, ENV['home_directory'] || user
 set :application, File.basename(`git config --get remote.origin.url`.chomp, '.*')
+
+# Remote paths
+set :deploy_to, "/tmp/#{application}"
+set :currentloc, "#{deploy_to}/current"
+set :logloc, "#{deploy_to}/log"
+set :log, "#{logloc}/#{application}.log"
+
 set :repository, "git@github.com:twitter/#{application}.git"
 set :branch, "master"
 set :scm, :git
 set :strategy, Capistrano::Deploy::Strategy::Build.new(self)
 set :copy_cache, true
-set :deploy_to, "/home/#{home_directory}/#{application}"
-set :currentloc, "#{deploy_to}/current"
-set :logloc, "#{deploy_to}/log"
-set :log, "#{logloc}/#{application}.log"
+
 set :remote_unzip_dir, release_name
 set :keep_releases, 3
 set :build_task, "sbt clean update package-dist"
@@ -46,11 +49,14 @@ hosts = [ENV['host'] || abort("You must specify a host with host=yourhost.com")]
 role :app, *hosts
 
 namespace :deploy do
-  [:finalize_update, :restart].each do |default_task|
-    task default_task do
-      # nothing
-    end
-  end
+ [:finalize_update, :restart].each do |default_task|
+   task default_task do
+     # nothing
+   end
+ end
+
+  before 'deploy', 'deploy:setup'
+  after 'deploy', 'deploy:restart'
 
   desc "Directory setup of remote machines."
   task :setup, :roles => :app do
@@ -69,6 +75,12 @@ namespace :deploy do
     run "pkill -TERM java &>/dev/null"
   end
 
+  desc "Restart"
+  task :restart do
+    stop
+    start
+  end
+
   task :update_code, :roles => :app do
     on_rollback { run "rm -rf #{release_path}; true" }
     run "mkdir -p #{release_path}"
@@ -76,6 +88,3 @@ namespace :deploy do
     finalize_update
   end
 end
-
-before 'deploy:start', 'deploy:setup'
-before 'deploy:start', 'deploy:stop'
