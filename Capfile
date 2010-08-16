@@ -17,7 +17,7 @@ load 'deploy'
 
 set :ssh_options, {:auth_methods => %w{ publickey }, :keys => [KEY] }
 
-set :user, ENV['user'] || 'ubuntu'
+set :user, ENV['user'] || 'root'
 set :application, File.basename(`git config --get remote.origin.url`.chomp, '.*')
 
 # Remote paths
