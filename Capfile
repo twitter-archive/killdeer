@@ -72,7 +72,7 @@ namespace :deploy do
 
   desc "Stop"
   task :stop, :roles => :app do
-    run "pkill -f #{application} &>/dev/null"
+    run "pkill -f #{application} &>/dev/null || exit 0"
   end
 
   desc "Restart"
