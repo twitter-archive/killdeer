@@ -63,6 +63,7 @@ namespace :deploy do
     run "mkdir -p #{deploy_to}"
     run "mkdir -p #{deploy_to}/releases"
     run "mkdir -p #{logloc}"
+    run "mkdir -p /var/log/#{application}"
   end
 
   desc "Start"
