@@ -20,6 +20,9 @@ object Killdeer {
       }
     }
 
+    // Works around a sleep bug in Jetty
+    System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Math.MAX_INT.toString)
+
     val server = new KilldeerServer(6666, samplesFilename, acceptors)
     server.start()
   }
