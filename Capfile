@@ -68,7 +68,7 @@ namespace :deploy do
 
   desc "Start"
   task :start, :roles => :app do
-    run "cd #{currentloc}; nohup bash #{currentloc}/scripts/#{application}.sh > #{log} &"
+    run "cd #{currentloc}; nohup bash #{currentloc}/scripts/#{application}.sh -f config/production.conf &"
   end
 
   desc "Stop"
