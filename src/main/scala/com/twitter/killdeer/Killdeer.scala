@@ -7,9 +7,14 @@ import org.eclipse.jetty.server.nio.SelectChannelConnector
 import org.eclipse.jetty.util.thread.ExecutorThreadPool
 import org.eclipse.jetty.continuation.{Continuation, ContinuationSupport}
 import javax.servlet.Servlet
+import net.lag.configgy.RuntimeEnvironment
 
 object Killdeer {
+  val runtime = new RuntimeEnvironment(getClass)
+
   def main(args: Array[String]) {
+    runtime.load(args)
+
     val (samplesFilename: String, acceptors: Int) = args.length match {
       case 0 => ("config/response-sample.txt", 30)
       case 1 => (args(0), 30)
@@ -21,7 +26,7 @@ object Killdeer {
     }
 
     // Works around a sleep bug in Jetty
-    System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Math.MAX_INT.toString)
+    System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Int.MaxValue.toString)
 
     val server = new KilldeerServer(6666, samplesFilename, acceptors)
     server.start()

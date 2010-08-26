@@ -2,8 +2,10 @@ package com.twitter.killdeer
 
 import org.eclipse.jetty.continuation.ContinuationSupport
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
+import net.lag.logging.Logger
 
 class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet {
+  private val w3c = Logger.get("w3c")
   def txnid(req: HttpServletRequest) = req.getHeader("X-Txn-Id") match {
     case null => "-"
     case s => s
@@ -17,6 +19,7 @@ class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet 
   val sample = new ResponseSampleLoader(responseSampleFilename)
 
   override def doGet(req: HttpServletRequest, res: HttpServletResponse) {
+    w3c.info("%s %s", txnid(req), rqid(req))
     //val continuation = ContinuationSupport.getContinuation(req)
 
     //if (continuation.isInitial) {

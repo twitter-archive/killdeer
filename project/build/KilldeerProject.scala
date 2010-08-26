@@ -10,5 +10,6 @@ class KilldeerProject(info: ProjectInfo) extends StandardProject(info) {
   val jettyServlet = "org.eclipse.jetty" % "jetty-servlet" % "7.1.5.v20100705"
   val jettyCont = "org.eclipse.jetty" % "jetty-continuation" % "7.1.5.v20100705"
 
+  val configgy = "net.lag" % "configgy" % "2.0.0"
   override def mainClass = Some("com.twitter.killdeer.Killdeer")
 }
