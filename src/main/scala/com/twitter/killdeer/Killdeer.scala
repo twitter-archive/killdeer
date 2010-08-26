@@ -15,15 +15,8 @@ object Killdeer {
   def main(args: Array[String]) {
     runtime.load(args)
 
-    val (samplesFilename: String, acceptors: Int) = args.length match {
-      case 0 => ("config/response-sample.txt", 30)
-      case 1 => (args(0), 30)
-      case 2 => (args(0), args(1).toInt)
-      case _ => {
-        println("usage: com.twitter.killdeer.Killdeer <path/to/latencies.txt> [acceptors]")
-        System.exit(-1)
-      }
-    }
+    val samplesFilename = "config/response-sample.txt"
+    val acceptors = 30
 
     // Works around a sleep bug in Jetty
     System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Int.MaxValue.toString)
