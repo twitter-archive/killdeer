@@ -10,26 +10,19 @@ import javax.servlet.Servlet
 import net.lag.configgy.RuntimeEnvironment
 
 object Killdeer {
-  val runtime = new RuntimeEnvironment(getClass)
-
   def main(args: Array[String]) {
-    runtime.load(args)
-
-    val samplesFilename = "config/response-sample.txt"
+    val responseSampleDirectory = args(0)
     val acceptors = 30
 
     // Works around a sleep bug in Jetty
     System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Int.MaxValue.toString)
 
-    val server = new KilldeerServer(6666, samplesFilename, acceptors)
+    val server = new KilldeerServer(6666, responseSampleDirectory, acceptors)
     server.start()
   }
 }
 
-class KilldeerServer(val port: Int, val responseSampleFilename: String, val numberOfAcceptors: Int) {
-  println("responseSampleFilename: %s".format(responseSampleFilename))
-  println("number of acceptors: %d".format(numberOfAcceptors))
-
+class KilldeerServer(val port: Int, val responseSampleDirectory: String, val numberOfAcceptors: Int) {
   val server = new Server(port)
   val conn = new SelectChannelConnector
 
@@ -58,7 +51,7 @@ class KilldeerServer(val port: Int, val responseSampleFilename: String, val numb
 
   server.addConnector(conn)
 
-  val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleFilename))
+  val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleDirectory))
 
   val servletHandler = new ServletHandler
   servletHandler.addServletWithMapping(responseLogDistribution, "/*")

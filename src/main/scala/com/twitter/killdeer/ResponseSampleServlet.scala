@@ -3,37 +3,24 @@ package com.twitter.killdeer
 import org.eclipse.jetty.continuation.ContinuationSupport
 import javax.servlet.http.{HttpServlet, HttpServletRequest, HttpServletResponse}
 import net.lag.logging.Logger
+import scala.io.Source
 
-class ResponseSampleServlet(responseSampleFilename: String) extends HttpServlet {
-  private val w3c = Logger.get("w3c")
-  def txnid(req: HttpServletRequest) = req.getHeader("X-Txn-Id") match {
+class ResponseSampleServlet(responseSampleDirectory: String) extends HttpServlet {
+  def txnid(req: HttpServletRequest) = req.getHeader("X-Transaction") match {
     case null => "-"
     case s => s
   }
-
-  def rqid(req: HttpServletRequest) = req.getHeader("X-Rq-Id") match {
-    case null => "-"
-    case s => s
-  }
-
-  val sample = new ResponseSampleLoader(responseSampleFilename)
+  
+  val sampleLoader = new SampleLoader(responseSampleDirectory)
 
   override def doGet(req: HttpServletRequest, res: HttpServletResponse) {
-    w3c.info("%s %s", txnid(req), rqid(req))
-    //val continuation = ContinuationSupport.getContinuation(req)
-
-    //if (continuation.isInitial) {
-      //val response: Response = sample.next()
-      //req.setAttribute("response", response)
-      //continuation.setTimeout(response.latencyMs)
-      //continuation.suspend()
-      //continuation.resume()
-    //} else { // if (continuation.isExpired) {
-      //val response = req.getAttribute("response").asInstanceOf[Response]
-      //res.setContentLength(response.size)
-
-      res.setStatus(200)
-      //res.getWriter().write("." * response.size)
-    //}
+    val transactionId = txnid(req)
+    val recordedResponse = sampleLoader(transactionId)
+    Thread.sleep(recordedResponse.latency)
+    res.setStatus(200)
+    recordedResponse.headers.foreach { case (headerName, headerValue) =>
+      res.addHeader(headerName, headerValue)
+    }
+    res.getWriter.write(recordedResponse.body)
   }
 }
