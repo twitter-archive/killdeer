@@ -1,65 +1,76 @@
 package com.twitter.killdeer
 
-import org.eclipse.jetty.server.Handler
-import org.eclipse.jetty.server.Server
-import org.eclipse.jetty.servlet.{DefaultServlet, FilterHolder, ServletContextHandler, ServletHandler, ServletHolder}
-import org.eclipse.jetty.server.nio.SelectChannelConnector
-import org.eclipse.jetty.util.thread.ExecutorThreadPool
-import org.eclipse.jetty.continuation.{Continuation, ContinuationSupport}
-import javax.servlet.Servlet
-import net.lag.configgy.RuntimeEnvironment
+import com.twitter.util.TimeConversions._
+import com.twitter.util.StorageUnitConversions._
+import com.twitter.util.Timer
+import org.jboss.netty.bootstrap.ServerBootstrap
+import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
+import java.util.concurrent.Executors
+import java.net.InetSocketAddress
+import org.jboss.netty.channel.Channels
+import org.jboss.netty.channel.{ChannelPipeline, ChannelPipelineFactory}
+import org.jboss.netty.handler.codec.http.{HttpChunkAggregator, HttpRequestDecoder, HttpResponseEncoder}
+import org.jboss.netty.handler.stream.ChunkedWriteHandler
+import org.jboss.netty.buffer.ChannelBuffers
+import org.jboss.netty.channel._
+import org.jboss.netty.handler.codec.http._
+import org.jboss.netty.handler.codec.http.HttpHeaders._
+import org.jboss.netty.handler.codec.http.HttpResponseStatus._
+import org.jboss.netty.handler.codec.http.HttpVersion._
+import org.jboss.netty.util.CharsetUtil
 
 object Killdeer {
   def main(args: Array[String]) {
     val responseSampleDirectory = args(0)
-    val acceptors = 30
+    val port = 6666
 
-    // Works around a sleep bug in Jetty
-    System.setProperty("org.mortbay.io.nio.JVMBUG_THRESHHOLD", Int.MaxValue.toString)
-
-    val server = new KilldeerServer(6666, responseSampleDirectory, acceptors)
-    server.start()
+    val bootstrap = new ServerBootstrap(
+      new NioServerSocketChannelFactory(
+        Executors.newCachedThreadPool(),
+        Executors.newCachedThreadPool()))
+    bootstrap.setPipelineFactory(new ResponseSamplePipelineFactory(responseSampleDirectory))
+    bootstrap.bind(new InetSocketAddress(port))
   }
 }
 
-class KilldeerServer(val port: Int, val responseSampleDirectory: String, val numberOfAcceptors: Int) {
-  val server = new Server(port)
-  val conn = new SelectChannelConnector
 
-  var acceptors = 2
-  var maxIdleTimeMS = 1000
-  var lowResourcesMaxIdleTimeMS = 300
-  var lowResourcesConnections = 200
-  var resolveNames = false
-  var reuseAddress = true
-  var headerBufferSize = 4192
-  var requestBufferSize = 16 * 1024
-  var responseBufferSize = 16 * 1024
-  var soLingerSecs = -1
+class ResponseSamplePipelineFactory(responseSampleDirectory: String) extends ChannelPipelineFactory {
+  val timer = new Timer
 
-  conn.setAcceptors(acceptors)
-  conn.setMaxIdleTime(maxIdleTimeMS)
-  conn.setAcceptQueueSize(100)
-  conn.setLowResourcesConnections(lowResourcesConnections)
-  conn.setLowResourceMaxIdleTime(lowResourcesMaxIdleTimeMS)
-  conn.setResolveNames(resolveNames)
-  conn.setReuseAddress(reuseAddress)
-  conn.setHeaderBufferSize(headerBufferSize)
-  conn.setRequestBufferSize(requestBufferSize)
-  conn.setResponseBufferSize(responseBufferSize)
-  conn.setSoLingerTime(soLingerSecs)
+  def getPipeline = {
+    val pipeline = Channels.pipeline()
+    pipeline.addLast("decoder", new HttpRequestDecoder)
+    pipeline.addLast("aggregator", new HttpChunkAggregator(64.kilobytes.inBytes.toInt))
+    pipeline.addLast("encoder", new HttpResponseEncoder)
 
-  server.addConnector(conn)
+    pipeline.addLast("handler", new ResponseSampleHandler(timer, responseSampleDirectory))
+    pipeline
+  }
+}
 
-  val responseLogDistribution = new ServletHolder(new ResponseSampleServlet(responseSampleDirectory))
+class ResponseSampleHandler(timer: Timer, responseSampleDirectory: String) extends SimpleChannelUpstreamHandler {
+  def txnid(request: HttpRequest) = request.getHeader("X-Transaction") match {
+    case null => "-"
+    case s => s
+  }
+  
+  val sampleLoader = new SampleLoader(responseSampleDirectory)
 
-  val servletHandler = new ServletHandler
-  servletHandler.addServletWithMapping(responseLogDistribution, "/*")
-
-  server.setHandler(servletHandler)
-
-  def start() {
-    server.start()
-    server.join()
+  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+    val request = e.getMessage.asInstanceOf[HttpRequest]
+    val transactionId = txnid(request)
+    val recordedResponse = sampleLoader(transactionId)
+    val response = new DefaultHttpResponse(HTTP_1_1, OK)
+    val channel = e.getChannel
+    recordedResponse.headers.foreach { case (headerName, headerValue) =>
+      response.addHeader(headerName, headerValue)
+    }
+    response.setContent(ChannelBuffers.copiedBuffer(recordedResponse.body + "\n", CharsetUtil.UTF_8))
+    timer.schedule(recordedResponse.latency.millis.fromNow) {
+      val writeFuture = channel.write(response)
+      if (!HttpHeaders.isKeepAlive(request)) {
+        writeFuture.addListener(ChannelFutureListener.CLOSE)
+      }
+    }
   }
 }
