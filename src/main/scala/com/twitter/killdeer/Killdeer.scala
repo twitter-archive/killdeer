@@ -33,7 +33,6 @@ object Killdeer {
   }
 }
 
-
 class ResponseSamplePipelineFactory(responseSampleDirectory: String) extends ChannelPipelineFactory {
   val timer = new Timer
 
@@ -49,6 +48,18 @@ class ResponseSamplePipelineFactory(responseSampleDirectory: String) extends Cha
 }
 
 class ResponseSampleHandler(timer: Timer, responseSampleDirectory: String) extends SimpleChannelUpstreamHandler {
+  val HOP_BY_HOP_HEADERS = collection.mutable.HashSet(
+    "Proxy-Connection",
+    "Keep-Alive",
+    "Transfer-Encoding",
+    "TE",
+    "Trailer",
+    "Proxy-Authorization",
+    "Proxy-Authenticate",
+    "Upgrade",
+    "Content-Length",
+    "Connection")
+
   def txnid(request: HttpRequest) = request.getHeader("X-Transaction") match {
     case null => "-"
     case s => s
@@ -63,9 +74,11 @@ class ResponseSampleHandler(timer: Timer, responseSampleDirectory: String) exten
     val response = new DefaultHttpResponse(HTTP_1_1, OK)
     val channel = e.getChannel
     recordedResponse.headers.foreach { case (headerName, headerValue) =>
-      response.addHeader(headerName, headerValue)
+      if (!HOP_BY_HOP_HEADERS.contains(headerName)) response.addHeader(headerName, headerValue)
     }
-    response.setContent(ChannelBuffers.copiedBuffer(recordedResponse.body + "\n", CharsetUtil.UTF_8))
+    val body = recordedResponse.body + "\n"
+    response.addHeader("Content-Length", body.size)
+    response.setContent(ChannelBuffers.copiedBuffer(body, CharsetUtil.UTF_8))
     timer.schedule(recordedResponse.latency.millis.fromNow) {
       val writeFuture = channel.write(response)
       if (!HttpHeaders.isKeepAlive(request)) {

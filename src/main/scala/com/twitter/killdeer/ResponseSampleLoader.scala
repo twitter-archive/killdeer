@@ -10,6 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 class SampleLoader(directoryName: String) {
   val FORMAT = "[^-]+".r
   def apply(transactionId: String) = {
+    println(transactionId)
     val Seq(timestamp, _, _) = FORMAT.findAllIn(transactionId).toList
     val filePath = directoryName + timestamp + '/' + transactionId
     RecordedResponse(Source.fromFile(filePath).mkString)
