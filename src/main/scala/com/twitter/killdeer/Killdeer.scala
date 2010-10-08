@@ -33,11 +33,28 @@ object Killdeer {
   }
 }
 
+class PipelineListener extends SimpleChannelHandler {
+  override def handleUpstream(ctx: ChannelHandlerContext, e: ChannelEvent) {
+    println("UPSTREAM: %s".format(e))
+    super.handleUpstream(ctx, e)
+  }
+
+  override def handleDownstream(ctx: ChannelHandlerContext, e: ChannelEvent) {
+    println("DOWNSTREAM: %s".format(e))
+    super.handleDownstream(ctx, e)
+  }
+}
+
 class ResponseSamplePipelineFactory(responseSampleDirectory: String) extends ChannelPipelineFactory {
   val timer = new Timer
 
   def getPipeline = {
     val pipeline = Channels.pipeline()
+    pipeline.addLast("faultInjector", new UpstreamFaultInjectorHandler(
+      new TimeoutFaultInjector              -> 0.5,
+      new ConnectionDisconnectFaultInjector -> 0.001
+    ))
+    // pipeline.addLast("listener", new PipelineListener)
     pipeline.addLast("decoder", new HttpRequestDecoder)
     pipeline.addLast("aggregator", new HttpChunkAggregator(64.kilobytes.inBytes.toInt))
     pipeline.addLast("encoder", new HttpResponseEncoder)
