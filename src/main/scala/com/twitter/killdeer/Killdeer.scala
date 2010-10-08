@@ -51,7 +51,7 @@ class ResponseSamplePipelineFactory(responseSampleDirectory: String) extends Cha
   def getPipeline = {
     val pipeline = Channels.pipeline()
     pipeline.addLast("faultInjector", new UpstreamFaultInjectorHandler(
-      new TimeoutFaultInjector              -> 0.5,
+      new TimeoutFaultInjector              -> 0.005,
       new ConnectionDisconnectFaultInjector -> 0.001
     ))
     // pipeline.addLast("listener", new PipelineListener)

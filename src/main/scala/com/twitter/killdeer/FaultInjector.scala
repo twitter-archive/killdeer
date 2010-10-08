@@ -16,8 +16,6 @@ import org.jboss.netty.channel.{
   DownstreamChannelStateEvent, ChannelStateEvent}
 import org.jboss.netty.util.{HashedWheelTimer, Timeout, TimerTask}
 
-// probability that it happens *some time* in a request.
-
 object PickFromCDF {
   // We assume the CDF is well-formed.
   val rng = new Random
