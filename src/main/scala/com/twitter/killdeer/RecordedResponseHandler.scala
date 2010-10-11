@@ -14,7 +14,7 @@ import org.jboss.netty.handler.codec.http.HttpResponseStatus._
 import org.jboss.netty.handler.codec.http.HttpVersion._
 import org.jboss.netty.util.CharsetUtil
 
-class RecordedResponseHandler(timer: Timer, responseSampleDirectory: String) extends SimpleChannelHandler {
+class RecordedResponseHandler(responseSampleDirectory: String) extends SimpleChannelHandler {
   import RecordedResponse.load
 
   def txnid(request: HttpRequest) = request.getHeader("X-Transaction") match {
