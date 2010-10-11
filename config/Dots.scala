@@ -14,6 +14,10 @@ new Config {
 
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
+    pipeline.addLast("faults",           new UpstreamFaultInjectorHandler(
+      new TimeoutFaultInjector              -> 0.005,
+      new ConnectionDisconnectFaultInjector -> 0.1
+    ))
     pipeline.addLast("latency",          new LatencyHandler(timer, latencyCdf))
     pipeline.addLast("dots",             new DotsHandler(contentLengthCdf))
     pipeline
