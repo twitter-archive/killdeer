@@ -4,6 +4,7 @@ import com.twitter.util.StorageUnitConversions._
 import com.twitter.util.Timer
 import org.jboss.netty.bootstrap.ServerBootstrap
 import org.jboss.netty.channel.socket.nio.NioServerSocketChannelFactory
+import java.io.File
 import java.util.concurrent.Executors
 import java.net.InetSocketAddress
 import org.jboss.netty.channel.{ChannelPipeline, ChannelPipelineFactory}
@@ -11,6 +12,7 @@ import org.jboss.netty.channel.Channels
 import org.jboss.netty.handler.codec.http.{HttpChunkAggregator, HttpRequestDecoder, HttpResponseEncoder}
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory
 import org.jboss.netty.channel.socket.nio.NioClientSocketChannelFactory
+import org.jboss.netty.handler.stream.ChunkedWriteHandler
 
 object Killdeer {
   def main(args: Array[String]) {
@@ -33,10 +35,11 @@ class KilldeerPipelineFactory(responseSampleDirectory: String, clientSocketChann
     val pipeline = Channels.pipeline()
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
+    // pipeline.addLast("return_recorded",  new RecordedResponseHandler(timer, responseSampleDirectory))
 
-    pipeline.addLast("return_recorded",  new RecordedResponseHandler(timer, responseSampleDirectory))
     pipeline.addLast("record_returned",  new ResponseRecorderHandler(responseSampleDirectory))
-    pipeline.addLast("proxy",            new Proxy(new InetSocketAddress("localhost", 80), clientSocketChannelFactory))
+
+    pipeline.addLast("proxy",            new ProxyHandler(new InetSocketAddress("localhost", 80), clientSocketChannelFactory))
     pipeline
   }
 }

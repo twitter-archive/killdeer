@@ -27,7 +27,7 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
     suspendTrafficWhileConnecting()
     val f = connect()
     outboundChannel = f.getChannel
-    f.addListener(new ChannelFutureListener() {
+    f.addListener(new ChannelFutureListener {
       def operationComplete(future: ChannelFuture) {
         if (future.isSuccess()) {
           inboundChannel.setReadable(true)
