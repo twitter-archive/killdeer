@@ -8,23 +8,8 @@ import java.util.concurrent.TimeUnit
 
 import util.Random
 
-import org.jboss.netty.channel.{
-  Channels, Channel, ChannelEvent, ChannelFuture,
-  SimpleChannelUpstreamHandler, SimpleChannelDownstreamHandler,
-  ChannelUpstreamHandler, ChannelHandlerContext, ChannelFutureListener,
-  LifeCycleAwareChannelHandler, MessageEvent, ChannelState,
-  DownstreamChannelStateEvent, ChannelStateEvent}
+import org.jboss.netty.channel._
 import org.jboss.netty.util.{HashedWheelTimer, Timeout, TimerTask}
-
-object PickFromCDF {
-  // We assume the CDF is well-formed.
-  val rng = new Random
-  def apply[T](cdf: List[Tuple2[Double, T]]):T = {
-    val pctPick = rng.nextFloat
-    val Some((_, value)) = cdf.find { case (pct, _) => pctPick < pct }
-    value
-  }
-}
 
 object FaultInjector {
   val timer = new HashedWheelTimer(1, TimeUnit.MILLISECONDS)
@@ -74,12 +59,11 @@ class ConnectionDisconnectFaultInjector extends FaultInjector {
 class UpstreamFaultInjectorHandler(injectors: Tuple2[FaultInjector, Double]*)
 extends SimpleChannelUpstreamHandler with LifeCycleAwareChannelHandler
 {
-  val rng = new Random
   @volatile var timeout: Timeout = _
 
   // Construct a CDF of the faults so we can easily pick from our
   // distribution.
-  val faultCDF = {
+  val faultCDF = new Cdf({
     val injectorCDF =
       injectors.foldLeft(Nil: List[Tuple2[Double, FaultInjector]]) {
         case (Nil, (injector, freq))                   => (freq / 1000.0, injector) :: Nil
@@ -87,7 +71,7 @@ extends SimpleChannelUpstreamHandler with LifeCycleAwareChannelHandler
       }
 
     ((1.0, NoFaultInjector) :: injectorCDF).reverse
-  }
+  })
 
   def start(channel: Channel) {
     timeout = FaultInjector.timer.newTimeout(
@@ -96,7 +80,7 @@ extends SimpleChannelUpstreamHandler with LifeCycleAwareChannelHandler
           if (!channel.isOpen || timeout.isCancelled)
             return
 
-          PickFromCDF(faultCDF).fire(channel)
+          faultCDF().fire(channel)
           timeout = FaultInjector.timer.newTimeout(this, 1, TimeUnit.MILLISECONDS)
         }
       }, 1, TimeUnit.MILLISECONDS)

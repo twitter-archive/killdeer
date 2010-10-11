@@ -1,11 +1,5 @@
 package com.twitter.killdeer
 
-import scala.collection.immutable.IndexedSeq
-import scala.io.Source
-import java.io.File
-import com.twitter.util.Timer
-import com.twitter.util.TimeConversions._
-import scala.collection.mutable.ArrayBuffer
 import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
