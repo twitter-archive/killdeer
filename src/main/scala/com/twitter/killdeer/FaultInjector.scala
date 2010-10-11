@@ -16,16 +16,6 @@ import org.jboss.netty.channel.{
   DownstreamChannelStateEvent, ChannelStateEvent}
 import org.jboss.netty.util.{HashedWheelTimer, Timeout, TimerTask}
 
-object PickFromCDF {
-  // We assume the CDF is well-formed.
-  val rng = new Random
-  def apply[T](cdf: List[Tuple2[Double, T]]):T = {
-    val pctPick = rng.nextFloat
-    val Some((_, value)) = cdf.find { case (pct, _) => pctPick < pct }
-    value
-  }
-}
-
 object FaultInjector {
   val timer = new HashedWheelTimer(1, TimeUnit.MILLISECONDS)
 }

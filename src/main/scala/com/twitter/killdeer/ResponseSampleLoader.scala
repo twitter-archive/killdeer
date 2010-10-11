@@ -7,7 +7,15 @@ import org.codehaus.jackson.JsonNode
 import org.codehaus.jackson.map.ObjectMapper
 import scala.collection.mutable.ArrayBuffer
 
-class SampleLoader(directoryName: String) {
+import org.jboss.netty.buffer.{ChannelBuffers, ChannelBuffer}
+import org.jboss.netty.util.CharsetUtil
+
+
+trait ResponseSource {
+  def apply(transactionId: String): RecordedResponse
+}
+
+class SampleLoader(directoryName: String) extends ResponseSource {
   val FORMAT = "[^-]+".r
   def apply(transactionId: String) = {
     println(transactionId)
@@ -18,7 +26,7 @@ class SampleLoader(directoryName: String) {
 }
 
 object RecordedResponse {
-  def apply(json: String) = {
+  def apply(json: String): RecordedResponse = {
     val mapper = new ObjectMapper
     val rootNode = mapper.readValue(json, classOf[JsonNode])
     val headerNodes = rootNode.path("headers").getElements
@@ -29,11 +37,18 @@ object RecordedResponse {
       headers += header
     }
     
-    new RecordedResponse(
-      rootNode.path("body").getTextValue,
+    apply(
+      rootNode.path("body").getTextValue + "\n",
       headers,
       rootNode.path("latency").getValueAsLong)
   }
+
+  def apply(body: String, headers: Collection[(String, String)], latency: Long): RecordedResponse =
+    RecordedResponse(ChannelBuffers.copiedBuffer(body, CharsetUtil.UTF_8), headers, latency)
+
 }
 
-case class RecordedResponse(body: String, headers: Collection[(String, String)], latency: Long)
+case class RecordedResponse(
+  body: ChannelBuffer,
+  headers: Collection[(String, String)],
+  latency: Long)
