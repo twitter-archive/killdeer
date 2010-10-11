@@ -31,7 +31,6 @@ object FaultInjector {
 }
 
 trait FaultInjector {
-  // TODO: define fire-once vs. not?
   def fault(channel: Channel)
 
   var fired = false
@@ -70,7 +69,10 @@ class ConnectionDisconnectFaultInjector extends FaultInjector {
   }
 }
 
-// Frequencies given are per request-second.
+// Frequencies given are per request-second. This will approximate a
+// set of Poisson processes. One difference: we're picking from a
+// common CDF to achieve mutual exclusion. Thus, we have correlation &
+// not a strict Poisson process.
 class UpstreamFaultInjectorHandler(injectors: Tuple2[FaultInjector, Double]*)
 extends SimpleChannelUpstreamHandler with LifeCycleAwareChannelHandler
 {
