@@ -1,6 +1,5 @@
 package com.twitter.killdeer
 
-import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.channel._
 import org.jboss.netty.handler.codec.http._
 import org.jboss.netty.handler.codec.http.HttpHeaders._
@@ -23,6 +22,7 @@ class RecordedResponseHandler(responseSampleDirectory: String) extends SimpleCha
     load(responseSampleDirectory, transactionId, request.getUri) map { recordedResponse =>
       channel.write(recordedResponse).addListener(new ChannelFutureListener {
         def operationComplete(future: ChannelFuture) {
+          channel.close()
           recordedResponse.releaseExternalResources()
         }
       })

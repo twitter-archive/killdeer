@@ -39,8 +39,12 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
   }
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    val msg = e.getMessage()
-    outboundChannel.write(msg)
+    val msg = e.getMessage
+    outboundChannel.write(msg).addListener(new ChannelFutureListener {
+      def operationComplete(future: ChannelFuture) {
+        e.getChannel.close()
+      }
+    })
   }
   
   private class OutboundHandler(inboundChannel: Channel) extends SimpleChannelUpstreamHandler {
