@@ -4,8 +4,11 @@ import org.jboss.netty.channel.Channels
 import java.util.concurrent.TimeUnit
 import org.jboss.netty.handler.codec.http.{HttpChunkAggregator, HttpRequestDecoder, HttpResponseEncoder}
 import java.net.InetSocketAddress
+import util.Random
 
 new Config {
+  val rng = new Random
+
   val contentLengthCdf = Cdf(
     0.5 -> 500,
     1.0 -> 1000
@@ -23,13 +26,12 @@ new Config {
     1.0  -> 10
   )
 
-  def pipeline = {
-    val pipeline = Channels.pipeline()
-    pipeline.addLast("throttler",        new DownstreamThrottlingHandler(bandwidthCdf(), timer))
 
   def pipeline = {
     val pipeline = Channels.pipeline()
 
+    if (rng.nextFloat < .5)  // else: unlimited bandwidth
+      pipeline.addLast("throttler", new DownstreamThrottlingHandler(bandwidthCdf(), timer))
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
     pipeline.addLast("faults",           new UpstreamFaultInjectorHandler(
