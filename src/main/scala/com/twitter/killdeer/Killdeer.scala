@@ -13,7 +13,6 @@ import org.jboss.netty.channel.socket.ClientSocketChannelFactory
 import org.jboss.netty.handler.stream.ChunkedWriteHandler
 
 trait Config {
-  def executor = Executors.newCachedThreadPool()
   def port = 6666
   def pipeline: ChannelPipeline
 }
@@ -23,11 +22,13 @@ object Killdeer {
     val configFileName = args(0)
     val config = Eval[Config](new File(configFileName))
     val port = config.port
-    val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(config.executor, config.executor))
+    val executor = Executors.newCachedThreadPool()
+    val bootstrap = new ServerBootstrap(new NioServerSocketChannelFactory(executor, executor))
 
     bootstrap.setPipelineFactory(new ChannelPipelineFactory {
       def getPipeline = config.pipeline
     })
     bootstrap.bind(new InetSocketAddress(port))
+    println("Now accepting connections on port: " + port)
   }
 }

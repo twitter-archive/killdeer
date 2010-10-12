@@ -26,6 +26,10 @@ new Config {
   def pipeline = {
     val pipeline = Channels.pipeline()
     pipeline.addLast("throttler",        new DownstreamThrottlingHandler(bandwidthCdf(), timer))
+
+  def pipeline = {
+    val pipeline = Channels.pipeline()
+
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
     pipeline.addLast("faults",           new UpstreamFaultInjectorHandler(

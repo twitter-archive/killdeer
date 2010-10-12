@@ -10,18 +10,27 @@ class ResponseRecorderHandler(sampleDirectory: String) extends SimpleChannelHand
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
     val request = e.getMessage.asInstanceOf[HttpRequest]
-    ctx.setAttachment(request)
+    var recorder = ctx.getAttachment.asInstanceOf[RecordedResponse]
+    if (recorder != null) recorder.close()
+    val transactionId = request.getHeader("X-Transaction")
+    
+    if (transactionId != null) {
+      recorder = RecordedResponse.open(sampleDirectory, transactionId, request.getUri)
+      ctx.setAttachment(recorder)
+    }
     ctx.sendUpstream(e)
   }
 
   override def writeRequested(ctx: ChannelHandlerContext, e: MessageEvent) {
     val response = e.getMessage.asInstanceOf[ChannelBuffer]
-    val request = ctx.getAttachment.asInstanceOf[HttpRequest]
-    RecordedResponse.save(sampleDirectory, request.getHeader("X-Transaction"), request.getUri, response)
+    val recorder = ctx.getAttachment.asInstanceOf[RecordedResponse]
+    if (recorder != null) recorder.writeMessage(response)
     ctx.sendDownstream(e)
   }
 
   override def channelClosed(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
+    val recorder = ctx.getAttachment.asInstanceOf[RecordedResponse]
+    if (recorder != null) recorder.close()
     ctx.sendDownstream(e)
   }
 }

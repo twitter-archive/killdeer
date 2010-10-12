@@ -2,9 +2,10 @@ package com.twitter.killdeer
 
 import java.net.InetSocketAddress
 import org.jboss.netty.channel._
+import org.jboss.netty.buffer.ChannelBuffers
 import org.jboss.netty.channel.socket.ClientSocketChannelFactory
 import org.jboss.netty.bootstrap.ClientBootstrap
-import org.jboss.netty.handler.codec.http.HttpRequestEncoder
+import org.jboss.netty.handler.codec.http._
 
 class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: ClientSocketChannelFactory) extends SimpleChannelUpstreamHandler {
   var inboundChannel: Channel = null
@@ -38,26 +39,39 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
     })
   }
 
+  override def channelClosed(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
+    if (outboundChannel != null) outboundChannel.close()
+  }
+
+  override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
+    e.getCause().printStackTrace()
+  }
+
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-    val msg = e.getMessage
-    outboundChannel.write(msg)
+    val request = e.getMessage.asInstanceOf[HttpRequest]
+    request.setHeader("Host", inetSocketAddress.getHostName)
+    outboundChannel.write(request)
   }
   
   private class OutboundHandler(inboundChannel: Channel) extends SimpleChannelUpstreamHandler {
     override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
-      inboundChannel.write(e.getMessage).addListener(new ChannelFutureListener {
-        def operationComplete(future: ChannelFuture) {
-          e.getChannel.close()
-        }
-      })
+      inboundChannel.write(e.getMessage)
     }
 
     override def channelClosed(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-      
+      closeOnFlush(inboundChannel)
+      ctx.sendDownstream(e)
     }
 
     override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-      
+      e.getCause().printStackTrace()
+      closeOnFlush(inboundChannel)
+      e.getChannel.close()
     }
+  }
+
+  def closeOnFlush(ch: Channel) {
+    if (ch.isConnected())
+      ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
   }
 }
