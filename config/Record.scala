@@ -16,7 +16,7 @@ new Config {
     pipeline.addLast("encoder",          new HttpResponseEncoder)
 
     pipeline.addLast("recordReturned",   new ResponseRecorderHandler(System.getProperty("user.home") + "/.killdeer/responses/"))
-    pipeline.addLast("proxy",            new ProxyHandler(new InetSocketAddress("api-staging48.local.twitter.com", 80), clientSocketChannelFactory))
+    pipeline.addLast("proxy",            new ProxyHandler(new InetSocketAddress("localhost", 80), clientSocketChannelFactory))
     pipeline
   }
 }
