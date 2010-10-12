@@ -8,6 +8,7 @@ import org.jboss.netty.buffer.ChannelBuffer
 
 object RecordedResponse {
   val FORMAT = "[^-]+".r
+  val maxFileLength = 32
 
   def load(destination: String, transactionId: String, uri: String) = {
     val file = fileFor(destination, transactionId, uri)
@@ -19,18 +20,30 @@ object RecordedResponse {
     }
   }
 
-  def save(destination: String, transactionId: String, uri: String, buffer: ChannelBuffer) {
-    val file = RecordedResponse.fileFor(destination, transactionId, uri)
-    val fileChannel = new FileOutputStream(file, false).getChannel
-    fileChannel.write(buffer.toByteBuffer)
-  }
+  def open(destination: String, transactionId: String, uri: String) =
+    new RecordedResponse(RecordedResponse.fileFor(destination, transactionId, uri))
+
 
   private def fileFor(destination: String, transactionId: String, uri: String) = {
     val Seq(timestamp, _, _) = FORMAT.findAllIn(transactionId).toList
     val pathName = destination + timestamp + "/" + transactionId
-    val path = new File(pathName)
-    path.mkdirs()
+
     val filename = URLEncoder.encode(uri)
-    new File(path, filename)
+    val splitFilename = filename.grouped(maxFileLength).toList
+    
+    val path = new File(pathName + "/" + splitFilename.take(splitFilename.length - 1).mkString("/"))
+    path.mkdirs()
+    new File(path, splitFilename.last)
   }
+}
+
+class RecordedResponse(file: File) {
+  file.delete()
+  val fileChannel = new FileOutputStream(file, true).getChannel
+
+  def writeMessage(buffer: ChannelBuffer) {
+    fileChannel.write(buffer.toByteBuffer)
+  }
+
+  def close() { fileChannel.close() }
 }

@@ -12,7 +12,7 @@ Run
 ===
 
 $ sbt
-> run config/response-sample.txt
+> run config/Dots.scala
 
 The response-sample.txt represents a response per line. Each request made to
 killdeer replays the responses in the sample file. When it reaches the end it

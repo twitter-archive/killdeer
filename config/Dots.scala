@@ -6,11 +6,12 @@ import org.jboss.netty.handler.codec.http.{HttpChunkAggregator, HttpRequestDecod
 import java.net.InetSocketAddress
 
 new Config {
+  val timer = new HashedWheelTimer(1, TimeUnit.MILLISECONDS)
+  val contentLengthCdf = Cdf("0.5:500,1.0:1000")
+  val latencyCdf       = Cdf("0.5:001,1.0:1000")
+
   def pipeline = {
     val pipeline = Channels.pipeline()
-    val contentLengthCdf = Cdf("0.5:500,1.0:1000")
-    val latencyCdf = Cdf("0.5:001,1.0:1000")
-    val timer = new HashedWheelTimer(1, TimeUnit.MILLISECONDS)
 
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
