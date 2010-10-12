@@ -9,6 +9,8 @@ object Cdf {
       Array(pct, x) = pctile.split(":")
     } yield (pct.toDouble, x.toInt)
   )
+
+  def apply[T](spec: Tuple2[Double, T]*) = new Cdf(spec)
 }
 
 class Cdf[T](spec: Seq[Tuple2[Double, T]]) {
