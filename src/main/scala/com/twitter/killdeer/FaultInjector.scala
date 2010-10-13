@@ -77,7 +77,7 @@ extends SimpleChannelUpstreamHandler with LifeCycleAwareChannelHandler
     timeout = FaultInjector.timer.newTimeout(
       new TimerTask {
         def run(to: Timeout) {
-          if (!channel.isOpen || timeout.isCancelled)
+          if (!channel.isOpen || to.isCancelled)
             return
 
           faultCDF().fire(channel)

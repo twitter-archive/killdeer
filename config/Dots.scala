@@ -30,13 +30,21 @@ new Config {
   def pipeline = {
     val pipeline = Channels.pipeline()
 
+    // This is pretty much the shittiest HTTP server you've ever
+    // talked to:
+
     if (rng.nextFloat < .5)  // else: unlimited bandwidth
       pipeline.addLast("throttler", new DownstreamThrottlingHandler(bandwidthCdf(), timer))
-    pipeline.addLast("decoder",          new HttpRequestDecoder)
-    pipeline.addLast("encoder",          new HttpResponseEncoder)
     pipeline.addLast("faults",           new UpstreamFaultInjectorHandler(
       new TimeoutFaultInjector              -> 0.005,
       new ConnectionDisconnectFaultInjector -> 0.1
+    ))
+    pipeline.addLast("decoder",          new HttpRequestDecoder)
+    pipeline.addLast("encoder",          new HttpResponseEncoder)
+    pipeline.addLast("http-faults",      new HttpFaultInjectorHandler(
+      ContentLengthManglingHttpFaultInjector   -> 0.1,
+      new ChunkDroppingHttpFaultInjector(0.3f) -> 0.1,
+      ContentLengthDroppingHttpFaultInjector   -> 0.1
     ))
     pipeline.addLast("latency",          new LatencyHandler(timer, latencyCdf))
     pipeline.addLast("dots",             new DotsHandler(contentLengthCdf))
