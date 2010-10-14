@@ -30,7 +30,7 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
     outboundChannel = f.getChannel
     f.addListener(new ChannelFutureListener {
       def operationComplete(future: ChannelFuture) {
-        if (future.isSuccess()) {
+        if (future.isSuccess) {
           inboundChannel.setReadable(true)
         } else {
           inboundChannel.close()
@@ -40,11 +40,11 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
   }
 
   override def channelClosed(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
-    if (outboundChannel != null) outboundChannel.close()
+    if (outboundChannel != null) closeOnFlush(outboundChannel)
   }
 
   override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
-    e.getCause().printStackTrace()
+    // e.getCause().printStackTrace() // usually doesn't matter
   }
 
   override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
@@ -60,18 +60,16 @@ class ProxyHandler(inetSocketAddress: InetSocketAddress, socketChannelFactory: C
 
     override def channelClosed(ctx: ChannelHandlerContext, e: ChannelStateEvent) {
       closeOnFlush(inboundChannel)
-      ctx.sendDownstream(e)
     }
 
     override def exceptionCaught(ctx: ChannelHandlerContext, e: ExceptionEvent) {
+      val channel = e.getChannel
       e.getCause().printStackTrace()
-      closeOnFlush(inboundChannel)
-      e.getChannel.close()
+      closeOnFlush(channel)
     }
   }
 
   def closeOnFlush(ch: Channel) {
-    if (ch.isConnected())
-      ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+    if (ch.isConnected) ch.write(ChannelBuffers.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE)
   }
 }

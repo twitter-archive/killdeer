@@ -14,7 +14,7 @@ new Config {
 
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
-    // pipeline.addLast("latency",          new LatencyHandler(timer, latencyCdf))
+    pipeline.addLast("latency",          new LatencyHandler(timer, latencyCdf))
     pipeline.addLast("returnRecorded",   new RecordedResponseHandler(System.getProperty("user.home") + "/.killdeer/responses/"))
     pipeline
   }

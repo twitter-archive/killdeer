@@ -18,7 +18,7 @@ trait Config {
 }
 
 object Killdeer {
-  def main(args: Array[String]) {
+  def apply(args: Seq[String]) {
     val configFileName = args(0)
     val config = Eval[Config](new File(configFileName))
     val port = config.port

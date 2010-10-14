@@ -15,6 +15,7 @@ new Config {
     pipeline.addLast("decoder",          new HttpRequestDecoder)
     pipeline.addLast("encoder",          new HttpResponseEncoder)
 
+    pipeline.addLast("log",              new LoggingHandler)
     pipeline.addLast("recordReturned",   new ResponseRecorderHandler(System.getProperty("user.home") + "/.killdeer/responses/"))
     pipeline.addLast("proxy",            new ProxyHandler(new InetSocketAddress("localhost", 80), clientSocketChannelFactory))
     pipeline

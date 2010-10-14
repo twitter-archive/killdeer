@@ -26,14 +26,10 @@ new Config {
     1.0  -> 10
   )
 
-
   def pipeline = {
     val pipeline = Channels.pipeline()
 
-    // This is pretty much the shittiest HTTP server you've ever
-    // talked to:
-
-    if (rng.nextFloat < .5)  // else: unlimited bandwidth
+    if (rng.nextFloat < 0.5)  // else: unlimited bandwidth
       pipeline.addLast("throttler", new DownstreamThrottlingHandler(bandwidthCdf(), timer))
     pipeline.addLast("faults",           new UpstreamFaultInjectorHandler(
       new TimeoutFaultInjector              -> 0.005,

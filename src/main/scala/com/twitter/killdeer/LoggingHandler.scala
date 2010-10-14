@@ -1,15 +1,12 @@
 package com.twitter.killdeer
 
 import org.jboss.netty.channel._
+import org.jboss.netty.handler.codec.http._
 
-class LoggingHandler extends SimpleChannelHandler {
-  override def handleUpstream(ctx: ChannelHandlerContext, e: ChannelEvent) {
-    println("UPSTREAM: %s".format(e))
-    super.handleUpstream(ctx, e)
-  }
-
-  override def handleDownstream(ctx: ChannelHandlerContext, e: ChannelEvent) {
-    println("DOWNSTREAM: %s".format(e))
-    super.handleDownstream(ctx, e)
+class LoggingHandler extends SimpleChannelUpstreamHandler {
+  override def messageReceived(ctx: ChannelHandlerContext, e: MessageEvent) {
+    val request = e.getMessage.asInstanceOf[HttpRequest]
+    println(request.getUri)
+    ctx.sendUpstream(e)
   }
 }

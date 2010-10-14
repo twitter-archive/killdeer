@@ -10,4 +10,4 @@ DEBUG_OPTS="-XX:ErrorFile=/var/log/$APP_NAME/java_error%p.log"
 JAVA_OPTS="-server $YK_OPTS $GC_OPTS $HEAP_OPTS $DEBUG_OPTS"
 
 
-java $JAVA_OPTS -jar $APP_NAME-$VERSION.jar $@
+java $JAVA_OPTS -jar $APP_NAME-$VERSION.jar killdeer $@
