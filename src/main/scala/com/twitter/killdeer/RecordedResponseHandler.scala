@@ -27,7 +27,8 @@ class RecordedResponseHandler(responseSampleDirectory: String) extends SimpleCha
         }
       })
     } getOrElse {
-      ctx.sendUpstream(e)
+      println("Unsupported request: " + request)
+      channel.close()
     }
   }
 }
