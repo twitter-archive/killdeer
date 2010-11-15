@@ -2,11 +2,14 @@ import sbt._
 import com.twitter.sbt._
 
 class Project(info: ProjectInfo) extends StandardProject(info) {
+  override def managedStyle = ManagedStyle.Maven
+  override def disableCrossPaths = true
+
   val codehaus = "codehaus" at "http://repository.codehaus.org/"
   val jboss = "repository.jboss.org" at "http://repository.jboss.org/nexus/content/groups/public/"
 
   val specs = "org.scala-tools.testing" % "specs_2.8.0" % "1.6.5"
-  val util = "com.twitter" %% "util" % "1.2-SNAPSHOT"
+  val util = "com.twitter" % "util" % "1.2.4"
 
   // Necessary for Eval because of a bug in SBT:
   val scalaTools = "org.scala-lang" % "scala-compiler" % "2.8.0" % "compile"
