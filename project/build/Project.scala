@@ -1,12 +1,14 @@
 import sbt._
 import com.twitter.sbt._
 
-class Project(info: ProjectInfo) extends StandardProject(info) {
+class Project(info: ProjectInfo) extends StandardProject(info) with SubversionPublisher {
   override def managedStyle = ManagedStyle.Maven
   override def disableCrossPaths = true
+  override def subversionRepository = Some("http://svn.local.twitter.com/maven-public")
 
   val codehaus = "codehaus" at "http://repository.codehaus.org/"
   val jboss = "repository.jboss.org" at "http://repository.jboss.org/nexus/content/groups/public/"
+
 
   val specs = "org.scala-tools.testing" % "specs_2.8.0" % "1.6.5"
   val util = "com.twitter" % "util" % "1.2.4"
